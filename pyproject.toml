@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "sisyphus-matroska"
+version = "0.1.0"
+description = ""
+authors = ["JamesTheBard <jamesthebard@gmail.com>"]
+readme = "README.md"
+packages = [{include = "sisyphus_matroska"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+rich = "^13.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sisyphus Matroska Schema",
+  "description": "The Sisyphus Matroska schema to import `matroska` options.",
+  "type": "object",
+  "properties": {
+    "sources": {
+      "description": "The sources to mux together.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "tracks": {
+      "description": "The tracks/streams and associated settings.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "description": "The source to use (zero-mapped) from 'sources'.",
+            "type": "integer"
+          },
+          "track": {
+            "description": "The track/stream to use from the source.",
+            "type": "integer"
+          },
+          "options": {
+            "description": "The options to use when muxing the source into the final output file.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "source",
+          "track"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "output_file": {
+      "description": "The output file to mux to.",
+      "type": "string"
+    },
+    "options": {
+      "description": "Global options for 'mkvmerge' to use.",
+      "type": "object"
+    },
+    "attachments": {
+      "description": "Add files as attachements during processing.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "description": "The file to attach.",
+            "type": "string"
+          },
+          "mime_type": {
+            "description": "The MIME type of the file.",
+            "type": "string"
+          }
+        },
+        "minItems": 1,
+        "required": ["file_name", "mime_type"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "sources",
+    "tracks",
+    "output_file"
+  ],
+  "additionalProperties": false
+}
