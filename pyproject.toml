@@ -9,7 +9,12 @@ packages = [{include = "sisyphus_matroska"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 rich = "^13.5.2"
+python-box = "^7.0.1"
+jsonschema = "^4.19.0"
 
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.14.0"
 
 [build-system]
 requires = ["poetry-core"]

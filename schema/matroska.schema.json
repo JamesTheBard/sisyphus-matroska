@@ -53,7 +53,11 @@
       "items": {
         "type": "object",
         "properties": {
-          "file_name": {
+          "name": {
+            "description": "The name of the attachment.",
+            "type": "string"
+          },
+          "filename": {
             "description": "The file to attach.",
             "type": "string"
           },
@@ -63,7 +67,7 @@
           }
         },
         "minItems": 1,
-        "required": ["file_name", "mime_type"],
+        "required": ["filename", "mime_type"],
         "additionalProperties": false
       }
     }

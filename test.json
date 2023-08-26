@@ -36,7 +36,7 @@
       "options": {
         "language": "eng",
         "default-track": "yes",
-        "track-title": "Full Subtitles"
+        "track-name": "Full Subtitles"
       }
     }
   ],
@@ -45,5 +45,10 @@
     "no-global-tags": null,
     "no-track-tags": null,
     "title": "Awesome Newly Muxed Video"
-  }
+  },
+  "attachments": [{
+    "name": "test font",
+    "filename": "test.ttf",
+    "mime_type": "INSERT_MIME_HERE"
+  }]
 }

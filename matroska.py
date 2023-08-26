@@ -1,19 +1,20 @@
 import json
+import platform
 import shlex
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
-from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
+import jsonschema
+from box import Box
 
-__all__ = [
-    "Matroska",
-    "MkvSource",
-    "MkvSourceTrack",
-    "MkvAttachment",
-]
+if platform.system() == "Windows":
+    MKVMERGE_PATH = shutil.which('mkvmerge.exe')
+else:
+    MKVMERGE_PATH = shutil.which('mkvmerge')
 
 
 class MkvSourceTrack:
@@ -22,19 +23,22 @@ class MkvSourceTrack:
     Attributes:
         options (dict): All of the key, value pairs for setting options.
         track (int): The track/stream associated with the options set.
-    """    
+    """
 
     options: dict
     track: int
+    track_type: str
+    info: dict
 
-    def __init__(self, track: int) -> None:
+    def __init__(self, track: int, options: Optional[dict]) -> None:
         """Create an instance of the MkvSourceTrack.
 
         Args:
             track (int): The track/stream to use.
-        """                
+            options (dict, optional): The options to use for the track. Defaults to None.
+        """
         self.track = track
-        self.options = dict()
+        self.options = options if options else dict()
 
     def set_option(self, option: str, value: str = None) -> None:
         """Set an option for a given track.
@@ -42,7 +46,7 @@ class MkvSourceTrack:
         Args:
             option (str): The option to set.
             value (str, optional): The value of that option. Defaults to None.
-        """        
+        """
         self.options[option] = value
 
     def get_option(self, option: str) -> Optional[str]:
@@ -66,6 +70,7 @@ class MkvSource:
     """
 
     source_file: Path
+    info: Box
     __tracks: List[MkvSourceTrack]
 
     def __init__(self, source_file: Union[str, Path]) -> None:
@@ -75,6 +80,7 @@ class MkvSource:
         """
         self.source_file = Path(source_file)
         self.__tracks = list()
+        self.get_info()
 
     def add_track(self, track: MkvSourceTrack) -> None:
         """
@@ -93,6 +99,16 @@ class MkvSource:
         except ValueError:
             pass
 
+    def get_info(self) -> None:
+        """Get the 'identify' information for the track.
+
+        Returns:
+            dict: The information from 'mkvmerge --identify' for the track.
+        """
+        command = [MKVMERGE_PATH, '-i', str(self.source_file), '-F', 'json']
+        output = subprocess.run(command, capture_output=True)
+        self.info = Box(json.loads(output.stdout))
+
     @property
     def tracks(self) -> List[MkvSourceTrack]:
         """
@@ -106,15 +122,34 @@ class MkvSource:
         Generate all options associated with this source and tracks
         :return: List of all options for the source/tracks
         """
+        track_count = {
+            "video": list(),
+            "audio": list(),
+            "subtitles": list(),
+            "buttons": list(),
+        }
         command = list()
         for track in self.__tracks:
+            track_type = self.info.tracks[track.track].type
+            track_count[track_type].append(track.track)
             for k, v in track.options.items():
                 if v is not None:
                     command.extend([f"--{k}", f"{track.track}:{v}"])
                 else:
                     command.extend([f"--{k}"])
         command.extend(("(", f"{self.source_file.absolute()}", ")"))
-        return command
+
+        pc = list()
+        for k, v in track_count.items():
+            if not v:
+                pc.append(f'--no-{k}')
+            else:
+                if k in ["subtitles", "buttons"]:
+                    k = k[:-1]
+                pc.append(f'--{k}-tracks')
+                pc.append(','.join([str(i) for i in v]))
+
+        return pc + command
 
 
 class MkvAttachment:
@@ -164,8 +199,9 @@ class Matroska:
     output: Path
     sources: List[MkvSource]
     track_order_override: list
+    schema_file: Path
 
-    def __init__(self, output: Union[str, Path]) -> None:
+    def __init__(self) -> None:
         """
         Create a Matroska muxing object
         :param output: The output file to mux everything into.
@@ -173,8 +209,48 @@ class Matroska:
         self.sources = list()
         self.attachments = list()
         self.track_order_override = list()
-        self.output = Path(output)
-        self.mkvmerge_path = Path(shutil.which("mkvmerge"))
+        self.output = None
+        self.mkvmerge_path = MKVMERGE_PATH
+        self.global_options = dict()
+        self.schema_file = Path("schema/matroska.schema.json")
+
+    def load_from_file(self, json_file: Union[Path, str]):
+        """Load all of the relevant Matroska information from a JSON file.
+
+        Args:
+            json_file (Union[Path, str]): The JSON file to load.
+        """
+        json_file = Path(json_file)
+        with json_file.open('r') as f:
+            data = json.load(f)
+
+        self.load_from_object(data)
+
+    def load_from_object(self, json_data: Union[Box, dict]):
+        """Load all of the relevant Matroska information from a dict.
+
+        Args:
+            json_data (Union[Box, dict]): The data to load.
+        """
+        with self.schema_file.open('r') as f:
+            schema = json.load(f)
+
+        try:
+            jsonschema.validate(json_data, schema)
+        except jsonschema.ValidationError as e:
+            print(f"Data failed schema validation: {e.message}")
+            sys.exit(100)
+
+        json_data = Box(json_data)
+        self.sources = [MkvSource(source) for source in json_data.sources]
+        for track in json_data.tracks:
+            source_track = MkvSourceTrack(track.track, track.options)
+            self.sources[track.source].add_track(source_track)
+        self.output = Path(json_data.output_file)
+        self.global_options = getattr(json_data, "options", dict())
+        self.attachments = [MkvAttachment(
+            **i) for i in getattr(json_data, "attachments", list())]
+        self.track_order_override = [f'{i.source}:{i.track}' for i in json_data.tracks]
 
     def add_source(self, source: MkvSource) -> None:
         """
@@ -205,12 +281,13 @@ class Matroska:
                 temp.append(f"{i}:{j.track}")
         return temp
 
-    def generate_options(self) -> list:
+    def generate_command(self, as_string=False) -> list:
         """
         Generate a list of options to feed the 'mkvmerge' binary.
         :return: A list of 'mkvmerge' options
         """
-        full_command = ["--output", f"{self.output.absolute()}"]
+        full_command = [str(self.mkvmerge_path)]
+        full_command.extend(["--output", f"{self.output.absolute()}"])
         for k, v in self.global_options.items():
             if not v:
                 full_command.append(f"--{k}")
@@ -221,6 +298,9 @@ class Matroska:
         for attachment in self.attachments:
             full_command.extend(attachment.generate_options())
         full_command.extend(["--track-order", ",".join(self.track_order)])
+
+        if as_string:
+            return shlex.join(full_command)
         return full_command
 
     def mux(
@@ -234,6 +314,9 @@ class Matroska:
         :param filename: The filename to store the 'mkvmerge' options as JSON
         :param delete_temp: Delete the JSON file after muxing is finished
         """
+        # command = self.generate_command()
+        # results = subprocess.run(command)
+        # return results.returncode
         if not filename:
             output_file = NamedTemporaryFile(mode="w", delete=False)
         else:
@@ -243,7 +326,7 @@ class Matroska:
             print(command)
             print(f"Creating temp file: {output_file.name}")
         with output_file as f:
-            json.dump(self.generate_options(), f)
+            json.dump(self.generate_command()[1:], f)
         if verbose:
             results = subprocess.run(shlex.split(command))
         else:
