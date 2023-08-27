@@ -1,3 +1,4 @@
+import logging
 import json
 import platform
 import shlex
@@ -9,12 +10,15 @@ from tempfile import NamedTemporaryFile
 from typing import List, Optional, Union
 
 import jsonschema
-from box import Box
+import box
+from box import Box, BoxList
 
 if platform.system() == "Windows":
     MKVMERGE_PATH = shutil.which('mkvmerge.exe')
 else:
     MKVMERGE_PATH = shutil.which('mkvmerge')
+logging.debug(
+    f"Found 'mkvmerge' binary ({platform.system()}): {MKVMERGE_PATH}")
 
 
 class MkvSourceTrack:
@@ -27,7 +31,6 @@ class MkvSourceTrack:
 
     options: dict
     track: int
-    track_type: str
     info: dict
 
     def __init__(self, track: int, options: Optional[dict]) -> None:
@@ -65,34 +68,44 @@ class MkvSourceTrack:
 
 
 class MkvSource:
-    """
-    A Matroska source object.
-    """
+    """The MkvSource object that holds source and track information.
 
+    Attributes:
+        source_file (Path): The source file to mux from.
+        info (Box): `mkvmerge -i` information associated with the source and associated tracks.
+    """
     source_file: Path
     info: Box
     __tracks: List[MkvSourceTrack]
 
     def __init__(self, source_file: Union[str, Path]) -> None:
-        """
-        Create a Matroska source object.
-        :param source_file: The file to use as a source
+        """Create a Matroska source object.
+
+        Args:
+            source_file (Union[str, Path]): The source filename to mux from.
         """
         self.source_file = Path(source_file)
+        if not self.source_file.exists():
+            logging.fatal(f"Source does not exist: '{self.source_file}'!")
+            sys.exit(10)
+        else:
+            logging.debug(f"Found source: '{self.source_file}'.")
         self.__tracks = list()
         self.get_info()
 
     def add_track(self, track: MkvSourceTrack) -> None:
-        """
-        Add an MkvSourceTrack to the source
-        :param track: The MkvSourceTrack to add
+        """Add an MkvSourceTrack to the source
+
+        Args:
+            track (MkvSourceTrack): The MkvSourceTrack to add
         """
         self.__tracks.append(track)
 
     def remove_track(self, track: MkvSourceTrack) -> None:
-        """
-        Delete an MkvSourceTrack from the source
-        :param track: The MkvSourceTrack to delete
+        """Delete an MkvSourceTrack from the source
+
+        Args:
+            track (MkvSourceTrack): The MkvSourceTrack to delete
         """
         try:
             self.__tracks.remove(track)
@@ -111,16 +124,19 @@ class MkvSource:
 
     @property
     def tracks(self) -> List[MkvSourceTrack]:
-        """
-        Returns a list of all the associated MkvSourceTracks
-        :return: List of all associated MkvSourceTracks
+        """Returns a list of all the associated MkvSourceTracks
+
+        Returns:
+            List[MkvSourceTrack]: The MkvSourceTracks associated with the source.
         """
         return self.__tracks
 
     def generate_options(self) -> list:
         """
         Generate all options associated with this source and tracks
-        :return: List of all options for the source/tracks
+
+        Returns:
+            list: List of all options for the source/tracks.
         """
         track_count = {
             "video": list(),
@@ -130,7 +146,13 @@ class MkvSource:
         }
         command = list()
         for track in self.__tracks:
-            track_type = self.info.tracks[track.track].type
+            try:
+                track_type = self.info.tracks[track.track].type
+            except box.BoxKeyError as e:
+                logging.fatal(
+                    f"Source '{self.source_file}' does not contain track number {track.track}!")
+                sys.exit(60)
+
             track_count[track_type].append(track.track)
             for k, v in track.options.items():
                 if v is not None:
@@ -153,24 +175,68 @@ class MkvSource:
 
 
 class MkvAttachment:
-    """
-    A Matroska attachment object.  Very useful for adding things like fonts for subtitle sources/tracks.
+    """A Matroska attachment object.  Very useful for adding things like fonts for subtitle sources/tracks.
+
+    Attributes:
+        filename (Path): The file to attach.
+        mimetype (str): The MIME-type associated with the file.
+        mimetypes (BoxList): A list of all MIME-type to file extension associations.
+        name (str): The name of the attachment.
     """
 
     filename: Path
-    mime_type: str
+    mimetype: str
+    mimetypes: BoxList
     name: str
 
-    def __init__(self, name: str, mime_type: str, filename: Union[str, Path]) -> None:
+    def __init__(self, filename: Union[str, Path], name: Optional[str] = None, mimetype: Optional[str] = None, mimetypes_file: Union[str, Path] = "schema/mimetypes.json") -> None:
+        """Create a subtitle attachment
+
+        Args:
+            name (str, optional): The name of the attachment. Defaults to None.
+            mimetype (str, optional): The MIME-type associated with the file. Defaults to None.
+            filename (Union[Path, str]): The file to attach.
+            mimetypes_file (Union[Path, str]): A file with MIME-type to extension associations. Defaults to the included file.
         """
-        Create a subtitle attachment
-        :param name: The filename to attach as
-        :param mime_type: The MIME type of the fime
-        :param filename: The actual file to attach from the local filesystem
-        """
-        self.name = name
-        self.mime_type = mime_type
         self.filename = Path(filename)
+        self.name = name if name else self.filename.name
+        if not self.filename.exists():
+            logging.fatal(f"Could not find attachment file: {self.filename}!")
+            sys.exit(70)
+        self.load_mimetypes_from_file(mimetypes_file)
+        self.mimetype = mimetype if mimetype else self.get_mimetype(self.filename)
+
+    def load_mimetypes_from_file(self, filename: Union[Path, str]) -> None:
+        """Populate all MIME-type associations from a JSON file.
+
+        Args:
+            filename (Union[Path, str]): The JSON file to load MIME-type associations from.
+        """
+        filename = Path(filename)
+        try:
+            with filename.open('r') as f:
+                self.mimetypes = BoxList(json.load(f))
+        except FileNotFoundError as e:
+            logging.fatal(
+                f"Cannot open MIME association file: {filename}!")
+
+
+    def get_mimetype(self, filename: Union[Path, str]) -> str:
+        """Get the associated MIME-type for the provided filename.
+
+        Args:
+            filename (Union[Path, str]): The filename to get the MIME-type for.
+
+        Returns:
+            str: The MIME-type associated with the file.
+        """
+        extension = filename.suffix[1:]
+        try:
+            return [i.mimetype for i in self.mimetypes if i.extension == extension][0]
+        except IndexError as e:
+            logging.fatal(
+                f"Could not associate attachment '{self.filename}' with a MIME-type!")
+            sys.exit(50)
 
     def generate_options(self) -> list:
         """
@@ -181,7 +247,7 @@ class MkvAttachment:
             "--attachment-name",
             self.name,
             "--attachment-mime-type",
-            self.mime_type,
+            self.mimetype,
             "--attach-file",
             str(self.filename.absolute()),
         ]
@@ -221,6 +287,9 @@ class Matroska:
             json_file (Union[Path, str]): The JSON file to load.
         """
         json_file = Path(json_file)
+        if not json_file.exists():
+            logging.fatal(f"Cannot open JSON file: '{json_file}'!")
+            sys.exit(10)
         with json_file.open('r') as f:
             data = json.load(f)
 
@@ -238,7 +307,7 @@ class Matroska:
         try:
             jsonschema.validate(json_data, schema)
         except jsonschema.ValidationError as e:
-            print(f"Data failed schema validation: {e.message}")
+            logging.fatal(f"Data failed schema validation: {e.message}")
             sys.exit(100)
 
         json_data = Box(json_data)
@@ -250,7 +319,8 @@ class Matroska:
         self.global_options = getattr(json_data, "options", dict())
         self.attachments = [MkvAttachment(
             **i) for i in getattr(json_data, "attachments", list())]
-        self.track_order_override = [f'{i.source}:{i.track}' for i in json_data.tracks]
+        self.track_order_override = [
+            f'{i.source}:{i.track}' for i in json_data.tracks]
 
     def add_source(self, source: MkvSource) -> None:
         """
@@ -338,3 +408,9 @@ class Matroska:
         if delete_temp:
             Path(output_file.name).unlink()
         return results.returncode
+
+
+if __name__ == "__main__":
+    a = Matroska()
+    a.load_from_file("test copy.json")
+    print(a.generate_command(True))

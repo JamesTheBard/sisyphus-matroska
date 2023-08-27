@@ -61,13 +61,13 @@
             "description": "The file to attach.",
             "type": "string"
           },
-          "mime_type": {
+          "mimetype": {
             "description": "The MIME type of the file.",
             "type": "string"
           }
         },
         "minItems": 1,
-        "required": ["filename", "mime_type"],
+        "required": ["filename"],
         "additionalProperties": false
       }
     }

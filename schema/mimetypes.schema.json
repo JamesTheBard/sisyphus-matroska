@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sisyphus Matroska MIME-Type Schema",
+  "description": "The Sisyphus Matroska schema to import `matroska` attachment MIME-types.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "mimetype": {
+        "description": "The MIME type associated with a given file extension",
+        "type": "string"
+      },
+      "extension": {
+        "description": "The file extension of the file for the MIME-type (not including the period).",
+        "type": "string"
+      }
+    },
+    "required": ["mimetype", "extension"]
+  },
+  "minItems": 1
+}

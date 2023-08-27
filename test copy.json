@@ -1,0 +1,56 @@
+{
+  "sources": [
+    "test1.mkv",
+    "test2.mkv"
+  ],
+  "tracks": [
+    {
+      "source": 0,
+      "track": 0,
+      "options": {
+        "language": "und",
+        "default-track": "yes",
+        "title": "Awesome Newly Muxed Video"
+      }
+    },
+    {
+      "source": 1,
+      "track": 1,
+      "options": {
+        "language": "jpn",
+        "default-track": "yes"
+      }
+    },
+    {
+      "source": 0,
+      "track": 2,
+      "options": {
+        "language": "eng",
+        "default-track": "no"
+      }
+    },
+    {
+      "source": 1,
+      "track": 3,
+      "options": {
+        "language": "eng",
+        "default-track": "yes",
+        "track-name": "THISISATEST"
+      }
+    }
+  ],
+  "output_file": "awesome_newly_muxed_video.mkv",
+  "options": {
+    "no-global-tags": null,
+    "no-track-tags": null,
+    "title": "Awesome Newly Muxed Video"
+  },
+  "attachments": [
+    {
+      "filename": "test.otf"
+    },
+    {
+      "filename": "test.ttf"
+    }
+  ]
+}
