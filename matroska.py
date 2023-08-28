@@ -190,7 +190,7 @@ class MkvAttachment:
     name: str
 
     def __init__(self, filename: Union[str, Path], name: Optional[str] = None, mimetype: Optional[str] = None, mimetypes_file: Union[str, Path] = "schema/mimetypes.json") -> None:
-        """Create a subtitle attachment
+        """Create an attachment for the Matroska file.
 
         Args:
             name (str, optional): The name of the attachment. Defaults to None.
