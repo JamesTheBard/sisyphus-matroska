@@ -8,12 +8,20 @@ from matroska import Matroska, MkvAttachment, MkvSource, MkvSourceTrack
 m = Matroska()
 
 # Set the output file for all of the muxing
-m.output = Path('awesome_newly_muxed_video.mkv')
+m.output = Path('output.mkv')
 
 # Add the sources. Tracks are zero-indexed based on their order in the CLI
 # as well as here.
-m.add_source(MkvSource(source_file='test1.mkv'))
-m.add_source(MkvSource(source_file='test2.mkv'))
+m.add_source(
+    MkvSource(
+        filename='test1.mkv',
+        options={
+            "_copy-video-tracks": None,
+            "no-chapters": None
+        }
+    )
+)
+m.add_source(MkvSource(filename='test2.mkv'))
 
 # Add tracks 0 and 2 to the first source (source 0)
 m.sources[0].add_track(
@@ -79,6 +87,9 @@ m.add_attachment(
 # Set the final track order for the Matroska file.  The order of this
 # puts the video track first (0:0), then the Japanese audio track (1:1),
 # then the English audio track (0:2), then the English subtitles (1:3).
+#
+# When loading from JSON, this is automatically generated from the order
+# of the tracks in the JSON file.
 m.track_order_override = ["0:0", "1:1", "0:2", "1:3"]
 
 # Mux the track.
@@ -105,8 +116,16 @@ The contents of the `test.json` file are below.
 ```json
 {
   "sources": [
-    "test1.mkv",
-    "test2.mkv"
+    {
+      "filename": "test1.mkv",
+      "options": {
+        "_copy-video-tracks": null,
+        "no-chapters": null
+      }
+    },
+    {
+      "filename": "test2.mkv"
+    }
   ],
   "tracks": [
     {
@@ -140,7 +159,7 @@ The contents of the `test.json` file are below.
       "options": {
         "language": "eng",
         "default-track": "yes",
-        "track-name": "Cool Audio Track"
+        "track-name": "THISISATEST"
       }
     }
   ],

@@ -8,7 +8,18 @@
       "description": "The sources to mux together.",
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "filename": {
+            "description": "The filename of the source to include.",
+            "type": "string"
+          },
+          "options": {
+            "description": "Additional source options to pass.",
+            "type": "object"
+          }
+        },
+        "required": ["filename"]
       },
       "minItems": 1
     },
