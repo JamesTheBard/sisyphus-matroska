@@ -324,11 +324,7 @@ class Matroska:
         with self.schema_file.open('r') as f:
             schema = json.load(f)
 
-        try:
-            jsonschema.validate(json_data, schema)
-        except jsonschema.ValidationError as e:
-            logging.fatal(f"Data failed schema validation: {e.message}")
-            sys.exit(100)
+        jsonschema.validate(json_data, schema)
 
         json_data = Box(json_data)
         self.sources = [MkvSource(**source) for source in json_data.sources]
