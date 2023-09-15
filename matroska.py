@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import platform
 import shlex
 import shutil
@@ -172,7 +173,8 @@ class MkvSource:
                 pc.append(','.join([str(i) for i in v]))
 
         for k, v in self.options.items():
-            if k[0] == "_": continue
+            if k[0] == "_":
+                continue
             if v == None or type(v) is bool:
                 pc.append(f'--{k}')
             else:
@@ -212,7 +214,8 @@ class MkvAttachment:
             logging.fatal(f"Could not find attachment file: {self.filename}!")
             sys.exit(70)
         self.load_mimetypes_from_file(mimetypes_file)
-        self.mimetype = mimetype if mimetype else self.get_mimetype(self.filename)
+        self.mimetype = mimetype if mimetype else self.get_mimetype(
+            self.filename)
 
     def load_mimetypes_from_file(self, filename: Union[Path, str]) -> None:
         """Populate all MIME-type associations from a JSON file.
@@ -227,7 +230,6 @@ class MkvAttachment:
         except FileNotFoundError as e:
             logging.fatal(
                 f"Cannot open MIME association file: {filename}!")
-
 
     def get_mimetype(self, filename: Union[Path, str]) -> str:
         """Get the associated MIME-type for the provided filename.
@@ -276,7 +278,7 @@ class Matroska:
         sources (List[MkvSource]): The source files and options to use for tracks.
         track_order_override (list): A list of maps that set the final order of tracks in the output file.
     """
-    
+
     attachments: List[MkvAttachment]
     mkvmerge_path: Path
     global_options: dict
@@ -295,7 +297,9 @@ class Matroska:
         self.output = None
         self.mkvmerge_path = MKVMERGE_PATH
         self.global_options = dict()
-        self.schema_file = Path("schema/matroska.schema.json")
+        schema_path = Path(
+            os.path.dirname(os.path.abspath(__file__)))
+        self.schema_file = schema_path / Path("schema/matroska.schema.json")
 
     def load_from_file(self, json_file: Union[Path, str]):
         """Load all of the relevant Matroska information from a JSON file.
@@ -341,7 +345,7 @@ class Matroska:
 
     def add_source(self, source: MkvSource) -> None:
         """Add an MkvSource to mux into the Matroska file
-        
+
         Args: 
             source (MkvSource): An MkvSource object
         """
