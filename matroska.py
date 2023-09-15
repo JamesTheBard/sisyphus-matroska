@@ -180,7 +180,6 @@ class MkvSource:
             else:
                 pc.extend((f'--{k}', v))
 
-        print(pc)
         return pc + command
 
 
