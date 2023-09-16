@@ -1,3 +1,7 @@
+# Sisyphus Matroska
+
+This Python module wraps `mkvinfo`, `mkvmerge` and `mkvextract` commands and adds some enhancements to `mkvinfo` and `mkvextract` that allows for the search of tracks via language and track type.
+
 ## Pythonic Version
 
 ```python
