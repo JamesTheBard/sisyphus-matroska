@@ -4,10 +4,15 @@ version = "0.9.0"
 description = ""
 authors = ["JamesTheBard <jamesthebard@gmail.com>"]
 readme = "README.md"
-packages = [{include = "matroska.py"}]
+license = "GPL-3.0-or-later"
+packages = [
+    { include = "mkvmerge.py" },
+    { include = "mkvextract.py" }
+]
 include = [
     "schema/matroska.schema.json",
-    "schema/mimetypes.schema.json"
+    "schema/mimetypes.schema.json",
+    "schema/mkvextract.schema.json",
 ]
 
 [tool.poetry.dependencies]

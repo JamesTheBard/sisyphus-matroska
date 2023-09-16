@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sisyphus MkvExtract Schema",
+  "description": "The Sisyphus MkvExtract schema to import `mkvextract` options.",
+  "type": "object",
+  "properties": {
+    "source": {
+      "description": "The source to extract information from.",
+      "type": "string"
+    },
+    "tracks": {
+      "description": "Tracks to extract from the source file.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The track ID to extract.",
+            "type": "integer"
+          },
+          "filename": {
+            "description": "The file to extract the track ID to.",
+            "type": "string"
+          }
+        }
+      },
+      "required": ["id", "filename"],
+      "additionalProperties": false
+    },
+    "attachments": {
+      "description": "Attachments to extract from the source file.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The attachment ID to extract.",
+            "type": "integer"
+          },
+          "filename": {
+            "description": "The file to extract the attachment ID to.",
+            "type": "string"
+          }
+        }
+      },
+      "required": ["id", "filename"],
+      "additionalProperties": false
+    },
+    "chapters": {
+      "description": "Extract the chapters from the source file to the given filename.",
+      "type": "string"
+    },
+    "tags": {
+      "description": "Extract the tags from the source file to the given filename.",
+      "type": "string"
+    },
+    "timestamps": {
+      "description": "Timestamps to extract from the source file.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The timestamp ID to extract.",
+            "type": "integer"
+          },
+          "filename": {
+            "description": "The file to extract the timestamp ID to.",
+            "type": "string"
+          }
+        }
+      },
+      "required": ["id", "filename"],
+      "additionalProperties": false
+    },
+    "cues": {
+      "description": "Cues to extract from the source file.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The cue ID to extract.",
+            "type": "integer"
+          },
+          "filename": {
+            "description": "The file to extract the cue ID to.",
+            "type": "string"
+          }
+        }
+      },
+      "required": ["id", "filename"],
+      "additionalProperties": false
+    }
+  },
+  "minProperties": 2,
+  "additionalProperties": false,
+  "required": [
+    "source"
+  ]
+}
