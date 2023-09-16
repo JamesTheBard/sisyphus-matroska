@@ -298,7 +298,7 @@ class MkvMerge:
         self.global_options = dict()
         schema_path = Path(
             os.path.dirname(os.path.abspath(__file__)))
-        self.schema_file = schema_path / Path("schema/matroska.schema.json")
+        self.schema_file = schema_path / Path("schema/mkvmerge.schema.json")
 
     def load_from_file(self, json_file: Union[Path, str]):
         """Load all of the relevant Matroska information from a JSON file.

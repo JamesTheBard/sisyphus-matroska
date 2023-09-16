@@ -15,16 +15,26 @@
         "type": "object",
         "properties": {
           "id": {
-            "description": "The track ID to extract.",
+            "description": "The track ID to extract. If track_type and/or language are provided, then this becomes the ordinal for the filtered tracks.",
             "type": "integer"
           },
           "filename": {
             "description": "The file to extract the track ID to.",
             "type": "string"
+          },
+          "track_type": {
+            "description": "The type of track to search for.",
+            "type": "string"
+          },
+          "language": {
+            "description": "The language of the track."
           }
         }
       },
-      "required": ["id", "filename"],
+      "required": [
+        "id",
+        "filename"
+      ],
       "additionalProperties": false
     },
     "attachments": {
@@ -43,7 +53,10 @@
           }
         }
       },
-      "required": ["id", "filename"],
+      "required": [
+        "id",
+        "filename"
+      ],
       "additionalProperties": false
     },
     "chapters": {
@@ -70,7 +83,10 @@
           }
         }
       },
-      "required": ["id", "filename"],
+      "required": [
+        "id",
+        "filename"
+      ],
       "additionalProperties": false
     },
     "cues": {
@@ -89,7 +105,10 @@
           }
         }
       },
-      "required": ["id", "filename"],
+      "required": [
+        "id",
+        "filename"
+      ],
       "additionalProperties": false
     }
   },

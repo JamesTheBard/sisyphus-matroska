@@ -7,12 +7,13 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 packages = [
     { include = "mkvmerge.py" },
-    { include = "mkvextract.py" }
+    { include = "mkvextract.py" },
+    { include = "mkvinfo.py" }
 ]
 include = [
-    "schema/matroska.schema.json",
     "schema/mimetypes.schema.json",
     "schema/mkvextract.schema.json",
+    "schema/mkvmerge.schema.json"
 ]
 
 [tool.poetry.dependencies]
