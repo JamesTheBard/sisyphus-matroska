@@ -18,7 +18,7 @@ else:
     MKVEXTRACT_PATH = shutil.which('mkvextract')
 
 
-class Mkvextract:
+class MkvExtract:
     """Extract tracks, attachments, cues, timestamps, chapters, attachments from a
     given source file.
 
