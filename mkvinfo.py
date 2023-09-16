@@ -26,6 +26,7 @@ class MkvInfoTrack:
     track_id: int
     track_type: str
     track_lang: Union[str, None]
+    track_codec: str
 
 
 class MkvInfo:
@@ -75,7 +76,8 @@ class MkvInfo:
             track = MkvInfoTrack(
                 track_id=i.id,
                 track_type=i.type,
-                track_lang=lang
+                track_lang=lang,
+                track_codec=i.properties.codec_id
             )
             tracks.append(track)
         return tracks
