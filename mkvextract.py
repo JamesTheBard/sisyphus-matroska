@@ -9,6 +9,7 @@ from typing import Union
 
 import jsonschema
 from box import Box, BoxList
+
 from mkvinfo import MkvInfo
 
 if platform.system() == "Windows":
@@ -113,10 +114,11 @@ class Mkvextract:
             search_tags = {"track_type", "language"}
             tags = set(d.keys())
             if s_tags := tags.intersection(search_tags):
-                track = self.mkvinfo.get_tracks(**{i: d[i] for i in s_tags})[d.id]
+                track = self.mkvinfo.get_tracks(
+                    **{i: d[i] for i in s_tags})[d.id]
             else:
                 track = self.mkvinfo.tracks[d.id]
-            
+
             command.append(f"{track.track_id}:{d.filename}")
         return command
 
