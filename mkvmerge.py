@@ -264,7 +264,7 @@ class MkvAttachment:
         ]
 
 
-class Matroska:
+class MkvMerge:
     """A class that contains all the sources, attachments, and options required to create an
     actual useful set of configuration options.  It will also mux everything together.
 
@@ -439,6 +439,6 @@ class Matroska:
 
 
 if __name__ == "__main__":
-    a = Matroska()
+    a = MkvMerge()
     a.load_from_file("test copy.json")
     print(a.generate_command(True))
