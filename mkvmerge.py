@@ -317,6 +317,12 @@ class MkvMerge:
             data = json.load(f)
 
         self.load_from_object(data)
+        
+    def reload_source_information(self) -> None:
+        """Regenerate source information for all attached sources.
+        """
+        for source in self.sources:
+            source.get_info()
 
     def load_from_object(self, json_data: Union[Box, dict]):
         """Load all of the relevant Matroska information from a dict.
