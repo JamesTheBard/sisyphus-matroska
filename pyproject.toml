@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sisyphus-matroska"
-version = "1.0.0"
+version = "1.0.1"
 description = ""
 authors = ["JamesTheBard <jamesthebard@gmail.com>"]
 readme = "README.md"

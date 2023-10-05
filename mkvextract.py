@@ -5,7 +5,7 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 import jsonschema
 from box import Box, BoxList

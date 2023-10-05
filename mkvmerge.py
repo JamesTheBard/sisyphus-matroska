@@ -73,21 +73,23 @@ class MkvSource:
     Attributes:
         source_file (Path): The source file to mux from.
         info (Box): `mkvmerge -i` information associated with the source and associated tracks.
+        verify_files (bool): Whether to verify that the source files exist.
     """
     source_file: Path
     info: Box
     __tracks: List[MkvSourceTrack]
     options: Box
 
-    def __init__(self, filename: Union[str, Path], options: Optional[Box] = None) -> None:
+    def __init__(self, filename: Union[str, Path], options: Optional[Box] = None, verify_files: bool = False) -> None:
         """Create a Matroska source object.
 
         Args:
             source_file (Union[str, Path]): The source filename to mux from.
+            verify_files (bool): Verify that the source file exists. Defaults to False.
         """
         self.source_file = Path(filename)
         self.options = options if options else Box()
-        if not self.source_file.exists():
+        if not self.source_file.exists() or not verify_files:
             logging.fatal(f"Source does not exist: '{self.source_file}'!")
             sys.exit(10)
         else:
@@ -198,7 +200,7 @@ class MkvAttachment:
     mimetypes: BoxList
     name: str
 
-    def __init__(self, filename: Union[str, Path], name: Optional[str] = None, mimetype: Optional[str] = None, mimetypes_file: Union[str, Path] = "schema/mimetypes.json") -> None:
+    def __init__(self, filename: Union[str, Path], name: Optional[str] = None, mimetype: Optional[str] = None, mimetypes_file: Union[str, Path] = "schema/mimetypes.json", verify_files: bool = False) -> None:
         """Create an attachment for the Matroska file.
 
         Args:
@@ -206,10 +208,11 @@ class MkvAttachment:
             mimetype (str, optional): The MIME-type associated with the file. Defaults to None.
             filename (Union[Path, str]): The file to attach.
             mimetypes_file (Union[Path, str]): A file with MIME-type to extension associations. Defaults to the included file.
+            verify_files (bool): Verify that the attachment file exists. Defaults to False.
         """
         self.filename = Path(filename)
         self.name = name if name else self.filename.name
-        if not self.filename.exists():
+        if not self.filename.exists() or not verify_files:
             logging.fatal(f"Could not find attachment file: {self.filename}!")
             sys.exit(70)
         self.load_mimetypes_from_file(mimetypes_file)
