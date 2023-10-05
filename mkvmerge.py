@@ -89,7 +89,7 @@ class MkvSource:
         """
         self.source_file = Path(filename)
         self.options = options if options else Box()
-        if not self.source_file.exists() or not verify_files:
+        if not self.source_file.exists() and verify_files:
             logging.fatal(f"Source does not exist: '{self.source_file}'!")
             sys.exit(10)
         else:
@@ -212,7 +212,7 @@ class MkvAttachment:
         """
         self.filename = Path(filename)
         self.name = name if name else self.filename.name
-        if not self.filename.exists() or not verify_files:
+        if not self.filename.exists() and verify_files:
             logging.fatal(f"Could not find attachment file: {self.filename}!")
             sys.exit(70)
         self.load_mimetypes_from_file(mimetypes_file)
