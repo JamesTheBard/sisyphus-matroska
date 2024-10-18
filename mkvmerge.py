@@ -22,36 +22,6 @@ else:
 logging.debug(
     f"Found 'mkvmerge' binary ({platform.system()}): {MKVMERGE_PATH}")
 
-# Fix issue where MIME-types are inconsistent across distributions/containers.
-additional_mime_entries = {
-    ".ttc": "font/collection",
-    ".otf": "font/otf",
-    ".ttf": "font/ttf",
-    ".woff": "font/woff",
-    ".woff2": "font/woff2",
-}
-
-mimetypes.init()
-for extension, mimetype in additional_mime_entries.items():
-    mimetypes.add_type(mimetype, extension)
-
-
-def get_mimetype_from_file(filename: Path | str) -> Union[str, None]:
-    """Get the MIME-type of a file.
-
-    Args:
-        filename (Path | str): The filename to parse.
-
-    Returns:
-        str: The MIME-type of the file or None if it cannot determine the MIME-type.
-    """
-    filename = Path(filename)
-    mimetype, _ = mimetypes.guess_type(filename)
-    if not mimetype:
-        extension = filename.suffix.strip().lower()
-        mimetype = mimetypes.types_map.get(extension, None)
-    return mimetype
-
 
 class MkvSourceTrack:
     """An object to associate tracks with MkvSources.
@@ -244,25 +214,7 @@ class MkvAttachment:
         if not self.filename.exists() and verify_files:
             logging.fatal(f"Could not find attachment file: {self.filename}!")
             sys.exit(70)
-        self.mimetype = mimetype if mimetype else self.get_mimetype(
-            self.filename)
-
-    def get_mimetype(self, filename: Union[Path, str]) -> str:
-        """Get the associated MIME-type for the provided filename.
-
-        Args:
-            filename (Union[Path, str]): The filename to get the MIME-type for.
-
-        Returns:
-            str: The MIME-type associated with the file.
-        """
-        mimetype = get_mimetype_from_file(filename)
-        if not mimetype:
-            logging.fatal(
-                f"Could not associate attachment '{self.filename}' with a MIME-type!"
-            )
-            sys.exit(50)
-        return mimetype
+        self.mimetype = mimetype
 
     def generate_options(self) -> list:
         """
@@ -271,14 +223,19 @@ class MkvAttachment:
         Returns:
             list: List of attachment CLI options passed to mkvmerge.
         """
-        return [
+        options = [
             "--attachment-name",
             self.name,
-            "--attachment-mime-type",
-            self.mimetype,
             "--attach-file",
             str(self.filename.absolute()),
         ]
+
+        if self.mimetype:
+            options.extend(
+                ["--attachment-mime-type", self.mimetype]
+            )
+
+        return options
 
 
 class MkvMerge:
@@ -374,11 +331,7 @@ class MkvMerge:
         """
         files = (f for f in Path(dir).glob('*') if f.is_file())
         for f in files:
-            mimetype = get_mimetype_from_file(f)
-            if mimetype:
-                yield MkvAttachment(filename=f, mimetype=mimetype)
-            else:
-                logging.warning(f"Cannot determine MIME type of file: {f}")
+            yield MkvAttachment(filename=f)
 
     def add_source(self, source: MkvSource) -> None:
         """Add an MkvSource to mux into the Matroska file

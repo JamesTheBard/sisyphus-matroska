@@ -14,6 +14,8 @@ This Python module wraps `mkvinfo`, `mkvmerge` and `mkvextract` commands and add
 
 - **1.0.3**: MIME-types are automatically determined if no MIME-type is provided with an attachment via the `mimetypes` Python library.
 
+- **1.0.4**: MIME-types are now automatically determined by `mkvmerge` and no longer rely on the Python library.
+
 ## Pythonic Version
 
 ```python
