@@ -1,6 +1,5 @@
 import json
 import logging
-import mimetypes
 import os
 import platform
 import shlex
@@ -9,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, Union, Iterable
+from typing import Iterable, List, Optional, Union
 
 import box
 import jsonschema
