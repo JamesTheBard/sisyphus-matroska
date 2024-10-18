@@ -19,7 +19,7 @@ This Python module wraps `mkvinfo`, `mkvmerge` and `mkvextract` commands and add
 ```python
 from pathlib import Path
 
-from MkvMerge import MkvMerge, MkvAttachment, MkvSource, MkvSourceTrack
+from mkvmerge import MkvMerge, MkvAttachment, MkvSource, MkvSourceTrack
 
 m = MkvMerge()
 
