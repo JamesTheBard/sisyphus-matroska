@@ -31,10 +31,6 @@ additional_mime_entries = {
     ".woff2": "font/woff2",
 }
 
-mimetypes.init()
-for mimetype, extension in additional_mime_entries.items():
-    mimetypes.add_type(mimetype, extension)
-
 
 def get_mimetype_from_file(filename: Path | str) -> Union[str, None]:
     """Get the MIME-type of a file.
@@ -46,6 +42,11 @@ def get_mimetype_from_file(filename: Path | str) -> Union[str, None]:
         str: The MIME-type of the file or None if it cannot determine the MIME-type.
     """
     filename = Path(filename)
+    
+    mimetypes.init()
+    for mimetype, extension in additional_mime_entries.items():
+        mimetypes.add_type(mimetype, extension)
+
     mimetype, _ = mimetypes.guess_type(filename)
     if not mimetype:
         extension = filename.suffix.strip().lower()
