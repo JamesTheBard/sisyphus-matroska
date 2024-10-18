@@ -1,5 +1,6 @@
 import json
 import logging
+import mimetypes
 import os
 import platform
 import shlex
@@ -8,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Iterable
 
 import box
 import jsonschema
@@ -20,6 +21,24 @@ else:
     MKVMERGE_PATH = shutil.which('mkvmerge')
 logging.debug(
     f"Found 'mkvmerge' binary ({platform.system()}): {MKVMERGE_PATH}")
+
+mimetypes.init()
+
+
+def get_mimetype_from_file(filename: Path | str) -> Union[str, None]:
+    """Get the MIME-type of a file.
+
+    Args:
+        filename (Path | str): The filename to parse.
+
+    Returns:
+        str: The MIME-type of the file or None if it cannot determine the MIME-type.
+    """
+    mimetype, _ = mimetypes.guess_type(Path(filename))
+    if not mimetype:
+        extension = filename.suffix.strip()
+        mimetype = mimetypes.types_map.get(extension, None)
+    return mimetype
 
 
 class MkvSourceTrack:
@@ -197,17 +216,15 @@ class MkvAttachment:
 
     filename: Path
     mimetype: str
-    mimetypes: BoxList
     name: str
 
-    def __init__(self, filename: Union[str, Path], name: Optional[str] = None, mimetype: Optional[str] = None, mimetypes_file: Union[str, Path] = "schema/mimetypes.json", verify_files: bool = False) -> None:
+    def __init__(self, filename: Union[str, Path], name: Optional[str] = None, mimetype: Optional[str] = None, verify_files: bool = False) -> None:
         """Create an attachment for the Matroska file.
 
         Args:
             name (str, optional): The name of the attachment. Defaults to None.
             mimetype (str, optional): The MIME-type associated with the file. Defaults to None.
             filename (Union[Path, str]): The file to attach.
-            mimetypes_file (Union[Path, str]): A file with MIME-type to extension associations. Defaults to the included file.
             verify_files (bool): Verify that the attachment file exists. Defaults to False.
         """
         self.filename = Path(filename)
@@ -215,23 +232,8 @@ class MkvAttachment:
         if not self.filename.exists() and verify_files:
             logging.fatal(f"Could not find attachment file: {self.filename}!")
             sys.exit(70)
-        self.load_mimetypes_from_file(mimetypes_file)
         self.mimetype = mimetype if mimetype else self.get_mimetype(
             self.filename)
-
-    def load_mimetypes_from_file(self, filename: Union[Path, str]) -> None:
-        """Populate all MIME-type associations from a JSON file.
-
-        Args:
-            filename (Union[Path, str]): The JSON file to load MIME-type associations from.
-        """
-        filename = Path(filename)
-        try:
-            with filename.open('r') as f:
-                self.mimetypes = BoxList(json.load(f))
-        except FileNotFoundError as e:
-            logging.fatal(
-                f"Cannot open MIME association file: {filename}!")
 
     def get_mimetype(self, filename: Union[Path, str]) -> str:
         """Get the associated MIME-type for the provided filename.
@@ -242,13 +244,13 @@ class MkvAttachment:
         Returns:
             str: The MIME-type associated with the file.
         """
-        extension = filename.suffix[1:]
-        try:
-            return [i.mimetype for i in self.mimetypes if i.extension == extension][0]
-        except IndexError as e:
+        mimetype = get_mimetype_from_file(filename)
+        if not mimetype:
             logging.fatal(
-                f"Could not associate attachment '{self.filename}' with a MIME-type!")
+                f"Could not associate attachment '{self.filename}' with a MIME-type!"
+            )
             sys.exit(50)
+        return mimetype
 
     def generate_options(self) -> list:
         """
@@ -317,7 +319,7 @@ class MkvMerge:
             data = json.load(f)
 
         self.load_from_object(data)
-        
+
     def reload_source_information(self) -> None:
         """Regenerate source information for all attached sources.
         """
@@ -344,8 +346,27 @@ class MkvMerge:
         self.global_options = getattr(json_data, "options", dict())
         self.attachments = [MkvAttachment(
             **i) for i in getattr(json_data, "attachments", list())]
+        for attach_dir in json_data.get("attachment_directories", list()):
+            self.attachments.extend(self.add_attachment_directory(attach_dir))
         self.track_order_override = [
             f'{i.source}:{i.track}' for i in json_data.tracks]
+
+    def add_attachment_directory(self, dir: Union[Path, str]) -> Iterable[MkvAttachment]:
+        """Load all files from a directory as attachments.
+
+        Args:
+            dir (Union[Path, str]): The directory to load attachments from.
+
+        Yields:
+            Iterator[Iterable[MkvAttachment]]: An iterator of MkvAttachments.
+        """
+        files = (f for f in Path(dir).glob('*') if f.is_file())
+        for f in files:
+            mimetype = get_mimetype_from_file(f)
+            if mimetype:
+                yield MkvAttachment(filename=f, mimetype=mimetype)
+            else:
+                logging.warning(f"Cannot determine MIME type of file: {f}")
 
     def add_source(self, source: MkvSource) -> None:
         """Add an MkvSource to mux into the Matroska file

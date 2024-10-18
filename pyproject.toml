@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sisyphus-matroska"
-version = "1.0.2"
+version = "1.0.3"
 description = ""
 authors = ["JamesTheBard <jamesthebard@gmail.com>"]
 readme = "README.md"
@@ -13,8 +13,7 @@ packages = [
 include = [
     "schema/mimetypes.schema.json",
     "schema/mkvextract.schema.json",
-    "schema/mkvmerge.schema.json",
-    "schema/mimetypes.schema.json"
+    "schema/mkvmerge.schema.json"
 ]
 
 [tool.poetry.dependencies]

@@ -81,6 +81,14 @@
         "required": ["filename"],
         "additionalProperties": false
       }
+    },
+    "attachment_directories": {
+      "description": "Add directory's content as attachments.",
+      "type": "array",
+      "items": {
+        "description": "The directory to add the contents from.",
+        "type": "string"
+      }
     }
   },
   "required": [

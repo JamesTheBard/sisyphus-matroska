@@ -2,14 +2,26 @@
 
 This Python module wraps `mkvinfo`, `mkvmerge` and `mkvextract` commands and adds some enhancements to `mkvinfo` and `mkvextract` that allows for the search of tracks via language and track type.
 
+## New Features
+
+- **1.0.0**: Tracks are not automatically copied over from source files.  To copy all tracks to the resulting Matroska file, you can use the following options:
+
+  - `_copy-video-tracks`: Copy all video tracks for a given source.
+  - `_copy-audio-tracks`: Copy all audio tracks for a given source.
+  - `_copy-subtitle-tracks`: Copy all subtitle tracks for a given source.
+
+- **1.0.3**: You can add an attachment directory.  This will parse all of the files in that directory and add them as attachments to the Matroska file during multiplexing.  If the MIME-type cannot be automatically determined, the file will be skipped.
+
+- **1.0.3**: MIME-types are automatically determined if no MIME-type is provided with an attachment via the `mimetypes` Python library.
+
 ## Pythonic Version
 
 ```python
 from pathlib import Path
 
-from matroska import Matroska, MkvAttachment, MkvSource, MkvSourceTrack
+from MkvMerge import MkvMerge, MkvAttachment, MkvSource, MkvSourceTrack
 
-m = Matroska()
+m = MkvMerge()
 
 # Set the output file for all of the muxing
 m.output = Path('output.mkv')
@@ -88,6 +100,9 @@ m.add_attachment(
     )
 )
 
+# Add an entire directory of fonts as attachments.
+m.add_attachment_directory("./fonts")
+
 # Set the final track order for the Matroska file.  The order of this
 # puts the video track first (0:0), then the Japanese audio track (1:1),
 # then the English audio track (0:2), then the English subtitles (1:3).
@@ -103,9 +118,9 @@ m.mux()
 ## Passing a JSON file into the module
 
 ```python
-from matroska import Matroska
+from mkvmerge import MkvMerge
 
-m = Matroska()
+m = MkvMerge()
 
 # Load the configuration from the JSON file.  The track order in the JSON
 # file is based on the order that the tracks appear in the file.
@@ -180,6 +195,9 @@ The contents of the `test.json` file are below.
     {
       "filename": "test.ttf"
     }
+  ],
+  "attachment_directories": [
+    "./fonts"
   ]
 }
 ```
