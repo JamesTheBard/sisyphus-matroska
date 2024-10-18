@@ -22,8 +22,6 @@ else:
 logging.debug(
     f"Found 'mkvmerge' binary ({platform.system()}): {MKVMERGE_PATH}")
 
-mimetypes.init()
-
 
 def get_mimetype_from_file(filename: Path | str) -> Union[str, None]:
     """Get the MIME-type of a file.
@@ -34,7 +32,9 @@ def get_mimetype_from_file(filename: Path | str) -> Union[str, None]:
     Returns:
         str: The MIME-type of the file or None if it cannot determine the MIME-type.
     """
-    mimetype, _ = mimetypes.guess_type(Path(filename))
+    filename = Path(filename)
+    mimetypes.init()
+    mimetype, _ = mimetypes.guess_type(filename)
     if not mimetype:
         extension = filename.suffix.strip()
         mimetype = mimetypes.types_map.get(extension, None)
