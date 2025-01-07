@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sisyphus-matroska"
-version = "1.0.4"
+version = "1.0.5"
 description = ""
 authors = ["JamesTheBard <jamesthebard@gmail.com>"]
 readme = "README.md"
@@ -11,9 +11,7 @@ packages = [
     { include = "mkvinfo.py" }
 ]
 include = [
-    "schema/mimetypes.schema.json",
-    "schema/mkvextract.schema.json",
-    "schema/mkvmerge.schema.json"
+    { path = "schema/*.schema.json", format = ["sdist", "wheel"] }
 ]
 
 [tool.poetry.dependencies]
